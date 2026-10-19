@@ -1,0 +1,3 @@
+/home/dante/Gamedev/Projects/GameEngine/build/CMakeFiles/GameEngine.dir
+/home/dante/Gamedev/Projects/GameEngine/build/CMakeFiles/edit_cache.dir
+/home/dante/Gamedev/Projects/GameEngine/build/CMakeFiles/rebuild_cache.dir
