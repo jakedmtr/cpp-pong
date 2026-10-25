@@ -2,7 +2,6 @@
 /build/
 /out/
 /cmake-build-*/
-/src/old/
 
 # CMake generated files
 CMakeFiles/
@@ -21,3 +20,7 @@ compile_commands.json
 *.swp
 .idea/
 .vscode/
+
+# Misc.
+/src/old/
+ref.txt
