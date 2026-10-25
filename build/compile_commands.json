@@ -1,8 +1,0 @@
-[
-{
-  "directory": "/home/dante/Gamedev/Projects/GameEngine/build",
-  "command": "/usr/bin/g++ -g -std=c++20 -Wall -Wextra -Wpedantic -o CMakeFiles/GameEngine.dir/src/main.cpp.o -c /home/dante/Gamedev/Projects/GameEngine/src/main.cpp",
-  "file": "/home/dante/Gamedev/Projects/GameEngine/src/main.cpp",
-  "output": "CMakeFiles/GameEngine.dir/src/main.cpp.o"
-}
-]

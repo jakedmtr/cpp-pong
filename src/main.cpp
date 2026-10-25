@@ -1,58 +1,47 @@
-
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
 #include <iostream>
 
-int main(int argc, char* argv[]) {
-    (void)argc;
-    (void)argv;
+void print_scores(int player1_score, int player2_score)
+{
+    std::cout << "\nFinal score:\n";
+    std::cout << "Player 1: " << player1_score << "\n";
+    std::cout << "Player 2: " << player2_score << "\n";
+}
 
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
-        std::cerr << "SDL error: " << SDL_GetError() << '\n';
-        return 1;
-    }
+int calculate_next_position(int position, int velocity)
+{
+    return position + velocity;
+}
 
-    SDL_Window* window = nullptr;
-    SDL_Renderer* renderer = nullptr;
+int main ()
+{
+    int player1_score{0};
+    int player2_score{0};
+    int screen_width{100}; // fixed boundary of right side of the screen
+    int ball_x{80}; // horizontal position of ball
+    int ball_velocity_x{-10}; // how much the the horizontal poisition changes on each update
+    int steps{0};
 
-    if (!SDL_CreateWindowAndRenderer(
-            "My Game Engine", 800, 600, 0,
-            &window, &renderer)) {
-        std::cerr << "Window error: " << SDL_GetError() << '\n';
-        SDL_Quit();
-        return 1;
-    }
-
-    bool running = true;
-
-    while (running) {
-        SDL_Event event;
-
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_EVENT_QUIT) {
-                running = false;
-            }
+    while (steps < 8)
+    {
+        ball_x = calculate_next_position(ball_x, ball_velocity_x);
+        
+        if (ball_x >= screen_width)
+        {
+            ball_velocity_x = -ball_velocity_x;
+            player1_score += 1;
         }
 
-        // Draw background
-        SDL_SetRenderDrawColor(renderer, 25, 25, 35, 255);
-        SDL_RenderClear(renderer);
+        if (ball_x <= 0)
+        {
+            ball_velocity_x = -ball_velocity_x;
+            player2_score += 1;
+        }
 
-        // Draw rectangle
-        SDL_FRect rectangle{350.0f, 250.0f, 100.0f, 100.0f};
-
-        SDL_SetRenderDrawColor(renderer, 50, 200, 150, 255);
-        SDL_RenderFillRect(renderer, &rectangle);
-
-        // Display the frame
-        SDL_RenderPresent(renderer);
-
-        SDL_Delay(16);
+        std::cout << "Ball position: " << ball_x << "\n";
+        steps += 1;
     }
 
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+    print_scores(player1_score, player2_score);
 
     return 0;
 }

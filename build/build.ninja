@@ -11,8 +11,8 @@
 # =============================================================================
 
 # =============================================================================
-# Project: GameEngine
-# Configurations: Debug
+# Project: Pong
+# Configurations: 
 # =============================================================================
 
 #############################################
@@ -20,11 +20,6 @@
 
 ninja_required_version = 1.5
 
-
-#############################################
-# Set configuration variable for custom commands.
-
-CONFIGURATION = Debug
 # =============================================================================
 # Include auxiliary files.
 
@@ -39,47 +34,45 @@ include CMakeFiles/rules.ninja
 #############################################
 # Logical path to working directory; prefix for absolute paths.
 
-cmake_ninja_workdir = /home/dante/Gamedev/Projects/GameEngine/build/
+cmake_ninja_workdir = /home/dante/Gamedev/Pong/build/
 # =============================================================================
-# Object build statements for EXECUTABLE target GameEngine
+# Object build statements for EXECUTABLE target pong
 
 
 #############################################
-# Order-only phony target for GameEngine
+# Order-only phony target for pong
 
-build cmake_object_order_depends_target_GameEngine: phony || .
+build cmake_object_order_depends_target_pong: phony || .
 
-build CMakeFiles/GameEngine.dir/src/main.cpp.o: CXX_COMPILER__GameEngine_unscanned_Debug /home/dante/Gamedev/Projects/GameEngine/src/main.cpp || cmake_object_order_depends_target_GameEngine
-  DEP_FILE = CMakeFiles/GameEngine.dir/src/main.cpp.o.d
-  FLAGS = -g -std=c++20 -Wall -Wextra -Wpedantic
-  OBJECT_DIR = CMakeFiles/GameEngine.dir
-  OBJECT_FILE_DIR = CMakeFiles/GameEngine.dir/src
+build CMakeFiles/pong.dir/src/main.cpp.o: CXX_COMPILER__pong_unscanned_ /home/dante/Gamedev/Pong/src/main.cpp || cmake_object_order_depends_target_pong
+  DEP_FILE = CMakeFiles/pong.dir/src/main.cpp.o.d
+  FLAGS = -std=gnu++20
+  OBJECT_DIR = CMakeFiles/pong.dir
+  OBJECT_FILE_DIR = CMakeFiles/pong.dir/src
 
 
 # =============================================================================
-# Link build statements for EXECUTABLE target GameEngine
+# Link build statements for EXECUTABLE target pong
 
 
 #############################################
-# Link the executable GameEngine
+# Link the executable pong
 
-build GameEngine: CXX_EXECUTABLE_LINKER__GameEngine_Debug CMakeFiles/GameEngine.dir/src/main.cpp.o | /usr/lib64/libSDL3.so.0.4.18
-  DEP_FILE = CMakeFiles/GameEngine.dir/link.d
-  FLAGS = -g
-  LINK_FLAGS = -Wl,--dependency-file=CMakeFiles/GameEngine.dir/link.d
-  LINK_LIBRARIES = /usr/lib64/libSDL3.so.0.4.18
-  OBJECT_DIR = CMakeFiles/GameEngine.dir
+build pong: CXX_EXECUTABLE_LINKER__pong_ CMakeFiles/pong.dir/src/main.cpp.o
+  DEP_FILE = CMakeFiles/pong.dir/link.d
+  LINK_FLAGS = -Wl,--dependency-file=CMakeFiles/pong.dir/link.d
+  OBJECT_DIR = CMakeFiles/pong.dir
   POST_BUILD = :
   PRE_LINK = :
-  TARGET_FILE = GameEngine
-  TARGET_PDB = GameEngine.dbg
+  TARGET_FILE = pong
+  TARGET_PDB = pong.dbg
 
 
 #############################################
 # Utility command for edit_cache
 
 build CMakeFiles/edit_cache.util: CUSTOM_COMMAND
-  COMMAND = cd /home/dante/Gamedev/Projects/GameEngine/build && /usr/bin/ccmake -S/home/dante/Gamedev/Projects/GameEngine -B/home/dante/Gamedev/Projects/GameEngine/build
+  COMMAND = cd /home/dante/Gamedev/Pong/build && /usr/bin/ccmake -S/home/dante/Gamedev/Pong -B/home/dante/Gamedev/Pong/build
   DESC = Running CMake cache editor...
   pool = console
   restat = 1
@@ -91,7 +84,7 @@ build edit_cache: phony CMakeFiles/edit_cache.util
 # Utility command for rebuild_cache
 
 build CMakeFiles/rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = cd /home/dante/Gamedev/Projects/GameEngine/build && /usr/bin/cmake --regenerate-during-build -S/home/dante/Gamedev/Projects/GameEngine -B/home/dante/Gamedev/Projects/GameEngine/build
+  COMMAND = cd /home/dante/Gamedev/Pong/build && /usr/bin/cmake --regenerate-during-build -S/home/dante/Gamedev/Pong -B/home/dante/Gamedev/Pong/build
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
@@ -107,9 +100,9 @@ build rebuild_cache: phony CMakeFiles/rebuild_cache.util
 # =============================================================================
 
 #############################################
-# Folder: /home/dante/Gamedev/Projects/GameEngine/build
+# Folder: /home/dante/Gamedev/Pong/build
 
-build all: phony GameEngine
+build all: phony pong
 
 # =============================================================================
 # Built-in targets
@@ -118,14 +111,14 @@ build all: phony GameEngine
 #############################################
 # Re-run CMake if any of its inputs changed.
 
-build build.ninja: RERUN_CMAKE | /home/dante/Gamedev/Projects/GameEngine/CMakeLists.txt /usr/lib64/cmake/SDL3/SDL3Config.cmake /usr/lib64/cmake/SDL3/SDL3ConfigVersion.cmake /usr/lib64/cmake/SDL3/SDL3headersTargets.cmake /usr/lib64/cmake/SDL3/SDL3sharedTargets-relwithdebinfo.cmake /usr/lib64/cmake/SDL3/SDL3sharedTargets.cmake /usr/share/cmake/Modules/CMakeCXXInformation.cmake /usr/share/cmake/Modules/CMakeCommonLanguageInclude.cmake /usr/share/cmake/Modules/CMakeGenericSystem.cmake /usr/share/cmake/Modules/CMakeInitializeConfigs.cmake /usr/share/cmake/Modules/CMakeLanguageInformation.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInformation.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInitialize.cmake /usr/share/cmake/Modules/Compiler/CMakeCommonCompilerMacros.cmake /usr/share/cmake/Modules/Compiler/GNU-CXX.cmake /usr/share/cmake/Modules/Compiler/GNU.cmake /usr/share/cmake/Modules/FeatureSummary.cmake /usr/share/cmake/Modules/Internal/CMakeCXXLinkerInformation.cmake /usr/share/cmake/Modules/Internal/CMakeCommonLinkerInformation.cmake /usr/share/cmake/Modules/Linker/GNU-CXX.cmake /usr/share/cmake/Modules/Linker/GNU.cmake /usr/share/cmake/Modules/Platform/Linker/GNU.cmake /usr/share/cmake/Modules/Platform/Linker/Linux-GNU-CXX.cmake /usr/share/cmake/Modules/Platform/Linker/Linux-GNU.cmake /usr/share/cmake/Modules/Platform/Linux-GNU-CXX.cmake /usr/share/cmake/Modules/Platform/Linux-GNU.cmake /usr/share/cmake/Modules/Platform/Linux-Initialize.cmake /usr/share/cmake/Modules/Platform/Linux.cmake /usr/share/cmake/Modules/Platform/UnixPaths.cmake CMakeCache.txt CMakeFiles/3.31.11/CMakeCXXCompiler.cmake CMakeFiles/3.31.11/CMakeSystem.cmake
+build build.ninja: RERUN_CMAKE | /home/dante/Gamedev/Pong/CMakeLists.txt /usr/share/cmake/Modules/CMakeCXXInformation.cmake /usr/share/cmake/Modules/CMakeCommonLanguageInclude.cmake /usr/share/cmake/Modules/CMakeGenericSystem.cmake /usr/share/cmake/Modules/CMakeInitializeConfigs.cmake /usr/share/cmake/Modules/CMakeLanguageInformation.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInformation.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInitialize.cmake /usr/share/cmake/Modules/Compiler/CMakeCommonCompilerMacros.cmake /usr/share/cmake/Modules/Compiler/GNU-CXX.cmake /usr/share/cmake/Modules/Compiler/GNU.cmake /usr/share/cmake/Modules/Internal/CMakeCXXLinkerInformation.cmake /usr/share/cmake/Modules/Internal/CMakeCommonLinkerInformation.cmake /usr/share/cmake/Modules/Linker/GNU-CXX.cmake /usr/share/cmake/Modules/Linker/GNU.cmake /usr/share/cmake/Modules/Platform/Linker/GNU.cmake /usr/share/cmake/Modules/Platform/Linker/Linux-GNU-CXX.cmake /usr/share/cmake/Modules/Platform/Linker/Linux-GNU.cmake /usr/share/cmake/Modules/Platform/Linux-GNU-CXX.cmake /usr/share/cmake/Modules/Platform/Linux-GNU.cmake /usr/share/cmake/Modules/Platform/Linux-Initialize.cmake /usr/share/cmake/Modules/Platform/Linux.cmake /usr/share/cmake/Modules/Platform/UnixPaths.cmake CMakeCache.txt CMakeFiles/3.31.11/CMakeCXXCompiler.cmake CMakeFiles/3.31.11/CMakeSystem.cmake
   pool = console
 
 
 #############################################
 # A missing CMake input file is not an error.
 
-build /home/dante/Gamedev/Projects/GameEngine/CMakeLists.txt /usr/lib64/cmake/SDL3/SDL3Config.cmake /usr/lib64/cmake/SDL3/SDL3ConfigVersion.cmake /usr/lib64/cmake/SDL3/SDL3headersTargets.cmake /usr/lib64/cmake/SDL3/SDL3sharedTargets-relwithdebinfo.cmake /usr/lib64/cmake/SDL3/SDL3sharedTargets.cmake /usr/share/cmake/Modules/CMakeCXXInformation.cmake /usr/share/cmake/Modules/CMakeCommonLanguageInclude.cmake /usr/share/cmake/Modules/CMakeGenericSystem.cmake /usr/share/cmake/Modules/CMakeInitializeConfigs.cmake /usr/share/cmake/Modules/CMakeLanguageInformation.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInformation.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInitialize.cmake /usr/share/cmake/Modules/Compiler/CMakeCommonCompilerMacros.cmake /usr/share/cmake/Modules/Compiler/GNU-CXX.cmake /usr/share/cmake/Modules/Compiler/GNU.cmake /usr/share/cmake/Modules/FeatureSummary.cmake /usr/share/cmake/Modules/Internal/CMakeCXXLinkerInformation.cmake /usr/share/cmake/Modules/Internal/CMakeCommonLinkerInformation.cmake /usr/share/cmake/Modules/Linker/GNU-CXX.cmake /usr/share/cmake/Modules/Linker/GNU.cmake /usr/share/cmake/Modules/Platform/Linker/GNU.cmake /usr/share/cmake/Modules/Platform/Linker/Linux-GNU-CXX.cmake /usr/share/cmake/Modules/Platform/Linker/Linux-GNU.cmake /usr/share/cmake/Modules/Platform/Linux-GNU-CXX.cmake /usr/share/cmake/Modules/Platform/Linux-GNU.cmake /usr/share/cmake/Modules/Platform/Linux-Initialize.cmake /usr/share/cmake/Modules/Platform/Linux.cmake /usr/share/cmake/Modules/Platform/UnixPaths.cmake CMakeCache.txt CMakeFiles/3.31.11/CMakeCXXCompiler.cmake CMakeFiles/3.31.11/CMakeSystem.cmake: phony
+build /home/dante/Gamedev/Pong/CMakeLists.txt /usr/share/cmake/Modules/CMakeCXXInformation.cmake /usr/share/cmake/Modules/CMakeCommonLanguageInclude.cmake /usr/share/cmake/Modules/CMakeGenericSystem.cmake /usr/share/cmake/Modules/CMakeInitializeConfigs.cmake /usr/share/cmake/Modules/CMakeLanguageInformation.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInformation.cmake /usr/share/cmake/Modules/CMakeSystemSpecificInitialize.cmake /usr/share/cmake/Modules/Compiler/CMakeCommonCompilerMacros.cmake /usr/share/cmake/Modules/Compiler/GNU-CXX.cmake /usr/share/cmake/Modules/Compiler/GNU.cmake /usr/share/cmake/Modules/Internal/CMakeCXXLinkerInformation.cmake /usr/share/cmake/Modules/Internal/CMakeCommonLinkerInformation.cmake /usr/share/cmake/Modules/Linker/GNU-CXX.cmake /usr/share/cmake/Modules/Linker/GNU.cmake /usr/share/cmake/Modules/Platform/Linker/GNU.cmake /usr/share/cmake/Modules/Platform/Linker/Linux-GNU-CXX.cmake /usr/share/cmake/Modules/Platform/Linker/Linux-GNU.cmake /usr/share/cmake/Modules/Platform/Linux-GNU-CXX.cmake /usr/share/cmake/Modules/Platform/Linux-GNU.cmake /usr/share/cmake/Modules/Platform/Linux-Initialize.cmake /usr/share/cmake/Modules/Platform/Linux.cmake /usr/share/cmake/Modules/Platform/UnixPaths.cmake CMakeCache.txt CMakeFiles/3.31.11/CMakeCXXCompiler.cmake CMakeFiles/3.31.11/CMakeSystem.cmake: phony
 
 
 #############################################
