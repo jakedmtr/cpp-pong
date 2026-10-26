@@ -1,88 +1,164 @@
 #include <iostream>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
 
 struct Ball // define 'Ball' type
 {
-    int x; // horizontal position of ball
-    int y; // vertical position of ball
-    int v_x; // how much the the horizontal position changes on each update
-    int v_y; // how much the the vertical position changes on each update
+    SDL_FRect rect;
+    float v_x; // how much the the horizontal position changes on each update
+    float v_y; // how much the the vertical position changes on each update
 };
-
-int calculate_next_position(int position, int velocity)
-{
-    return position + velocity;
-}
-
-void reverse_velocity(int& velocity)
-{
-    velocity = -velocity;
-}
 
 void move_ball(Ball& ball)
 {
-    ball.x = calculate_next_position(ball.x, ball.v_x); // update the x-coordinate
-    ball.y = calculate_next_position(ball.y, ball.v_y); // update the y-coordinate
+    ball.rect.x += ball.v_x; // update the x-coordinate
+    ball.rect.y += ball.v_y; // update the y-coordinate
 }
 
-void handle_wall_collisions(Ball& ball, int screen_height)
+void handle_wall_collisions(Ball& ball, int window_height)
 {
-    if (ball.y <= 0) // reverse vertical direction of ball if it reaches the top boundary
-    { 
-        reverse_velocity(ball.v_y);
+    // Check ceiling
+    if (ball.rect.y <= 0.0f)
+    {
+        ball.rect.y = 0.0f; // reset position to prevent boundary penetration
+        ball.v_y = -ball.v_y; // reverse vertical velocity
     }
 
-    if (ball.y >= screen_height) // reverse vertical direction of ball if it reaches the bottom boundary
-    { 
-        reverse_velocity(ball.v_y);
+    // Check floor
+    if (ball.rect.y + ball.rect.h >= window_height)
+    {
+        ball.rect.y = window_height - ball.rect.h;
+        ball.v_y = -ball.v_y;
     }
 }
 
-void print_ball_position(const Ball& ball)
+void reset_ball(Ball& ball, int window_width, int window_height)
 {
-    std::cout << "Ball position: (" << ball.x << ", " << ball.y << ")\n";
+    // Restore the ball's position to the centre.
+    ball.rect.x = (window_width - ball.rect.w) / 2;
+    ball.rect.y = (window_height - ball.rect.h) / 2;
 }
 
-void print_scores(int player1_score, int player2_score)
+void handle_goals(
+    Ball& ball,
+    int window_width,
+    int window_height,
+    int& player1_score,
+    int& player2_score)
 {
-    std::cout << "\nFinal score:\n";
-    std::cout << "Player 1: " << player1_score << "\n";
-    std::cout << "Player 2: " << player2_score << "\n";
+    // Detect goals, update the score, and reset the ball
+    if (ball.rect.x >= window_width) // right boundary
+    {
+        player1_score += 1;
+
+        std::cout << "Player 1 scores! "
+                  << player1_score << " - "
+                  << player2_score << "\n";
+
+        reset_ball(ball, window_width, window_height);
+        ball.v_x = -ball.v_x; // reverse velocity
+    }
+    if (ball.rect.x + ball.rect.w <= 0) // left boundary
+    {
+        player2_score += 1;
+
+        std::cout << "Player 2 scores! "
+            << player1_score << " - "
+            << player2_score << "\n";
+
+        reset_ball(ball, window_width, window_height);
+        ball.v_x = -ball.v_x;
+    }
 }
 
-int main ()
+int main(int, char*[])
 {
+    const int window_width{1024};
+    const int window_height{768};
     int player1_score{0};
     int player2_score{0};
-    const int screen_width{100}; // fixed boundary of right side of the screen
-    const int screen_height{50}; // fixed boundary of bottom side of the screen
-    int steps{0}; // counter for while loop
-    const int limit{10}; // number of steps for while loop
 
-    Ball ball{20, 20, 5, 10}; // create ball object of type 'Ball'
-
-    while (steps < limit)
+    // Initialise SDL's video subsystem
+    if (!SDL_Init(SDL_INIT_VIDEO))
     {
-        move_ball(ball);
-        handle_wall_collisions(ball, screen_height);
-
-        if (ball.x >= screen_width) // reverse horizontal direction of ball if it reaches the right boundary
-        {
-            reverse_velocity(ball.v_x);
-            player1_score += 1;
-        }
-
-        if (ball.x <= 0) // reverse horizontal direction of ball if it reaches the left boundary
-        {
-            reverse_velocity(ball.v_x);
-            player2_score += 1;
-        }
-
-        print_ball_position(ball);
-
-        steps += 1;
+        std::cerr << "SDL initialisation failed: "
+                  << SDL_GetError() << "\n";
+        return 1;
     }
 
-    print_scores(player1_score, player2_score);
+    // Create our window
+    SDL_Window* window = SDL_CreateWindow("My First C++ Game", window_width, window_height, 0);
+
+    if (window == nullptr)
+    {
+        std::cerr << "Window creation failed: "
+                  << SDL_GetError() << "\n";
+        SDL_Quit();
+        return 1;
+    }
+
+    // Create a renderer for drawing into the window
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, nullptr);
+
+    if (renderer == nullptr)
+    {
+        std::cerr << "Renderer creation failed: "
+                  << SDL_GetError() << "\n";
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+
+    std::cout << "Window and renderer created successfully!\n";
+
+    Ball ball{{200.0f, 150.0f, 20.0f, 20.0f}, 5.0f, 3.0f};
+
+    bool running{true};
+
+    while (running)
+    {
+        SDL_Event event;
+
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_EVENT_QUIT)
+            {
+                running = false;
+            }
+        }
+
+        move_ball(ball);
+       
+        handle_wall_collisions(ball, window_height);
+        
+        handle_goals(
+            ball,
+            window_width,
+            window_height,
+            player1_score,
+            player2_score
+        );
+
+        // Set the drawing colour
+        SDL_SetRenderDrawColor(renderer, 20, 100, 90, 255);
+
+        // Fill the window with the current drawing colour
+        SDL_RenderClear(renderer);
+
+        // Draw a white rectangle
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderFillRect(renderer, &ball.rect);
+
+        // Present the completed frame
+        SDL_RenderPresent(renderer);
+
+        SDL_Delay(16);
+    }
+
+    // Release resources
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
 
     return 0;
 }
