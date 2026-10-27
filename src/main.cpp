@@ -9,6 +9,17 @@ struct Ball // define 'Ball' type
     float v_y; // how much the the vertical position changes on each update
 };
 
+struct Paddle // define 'Paddle' type
+{
+    SDL_FRect rect;
+};
+
+enum class PaddleSide
+{
+    Left,
+    Right
+};
+
 void move_ball(Ball& ball)
 {
     ball.rect.x += ball.v_x; // update the x-coordinate
@@ -71,6 +82,55 @@ void handle_goals(
     }
 }
 
+void move_paddle(
+    Paddle& paddle,
+    const bool* keyboard,
+    SDL_Scancode up_key,
+    SDL_Scancode down_key,
+    float paddle_speed,
+    float window_height)
+{
+    if (keyboard[up_key]) // Move paddle upwards
+    {
+        paddle.rect.y -= paddle_speed;
+    }
+    if (keyboard[down_key]) // Move downwards
+    {
+        paddle.rect.y += paddle_speed;
+    }
+    // Clamp paddle position to window boundaries
+    if (paddle.rect.y <= 0.0f)
+    {
+        paddle.rect.y = 0.0f;
+    }
+    if (paddle.rect.y + paddle.rect.h >= window_height)
+    {
+        paddle.rect.y = window_height - paddle.rect.h;
+    }
+}
+
+void handle_paddle_collisions(
+        Ball& ball,
+        const Paddle& paddle,
+        PaddleSide side)
+{
+    if (SDL_HasRectIntersectionFloat(&ball.rect, &paddle.rect))
+    {
+        // Left paddle collision
+        if (side == PaddleSide::Left && ball.v_x < 0.0f)
+        {
+            ball.v_x = -ball.v_x;
+            ball.rect.x = paddle.rect.x + paddle.rect.w;           
+        }
+        // Right paddle collision
+        else if (side == PaddleSide::Right && ball.v_x > 0.0f)
+        {
+            ball.v_x = -ball.v_x;
+            ball.rect.x = paddle.rect.x - ball.rect.w;
+        }
+    }
+}
+
 int main(int, char*[])
 {
     const int window_width{1024};
@@ -87,7 +147,7 @@ int main(int, char*[])
     }
 
     // Create our window
-    SDL_Window* window = SDL_CreateWindow("My First C++ Game", window_width, window_height, 0);
+    SDL_Window* window = SDL_CreateWindow("Pong", window_width, window_height, 0);
 
     if (window == nullptr)
     {
@@ -111,8 +171,18 @@ int main(int, char*[])
 
     std::cout << "Window and renderer created successfully!\n";
 
-    Ball ball{{200.0f, 150.0f, 20.0f, 20.0f}, 5.0f, 3.0f};
+    // Paddle dimensions
+    constexpr float paddle_width = 16.0f;
+    constexpr float paddle_height = 100.0f;
+    constexpr float paddle_margin = 30.0f;
 
+    // Speed of paddle
+    const float paddle_speed = 5.0f;
+
+    Ball ball{{200.0f, 150.0f, 20.0f, 20.0f}, 6.0f, 3.0f};
+    Paddle player1_paddle{{paddle_margin, (window_height - paddle_height) / 2.0f, paddle_width, paddle_height}};
+    Paddle player2_paddle{{window_width - (paddle_width + paddle_margin), (window_height - paddle_height) / 2.0f, paddle_width, paddle_height}};
+   
     bool running{true};
 
     while (running)
@@ -126,11 +196,40 @@ int main(int, char*[])
                 running = false;
             }
         }
+        
+        // Read the keyboard
+        const bool* keyboard = SDL_GetKeyboardState(nullptr);
+        
+        // Left paddle control
+        move_paddle(
+            player1_paddle,
+            keyboard,
+            SDL_SCANCODE_W,
+            SDL_SCANCODE_S,
+            paddle_speed,
+            window_height
+        );
+
+        // Right paddle control
+        move_paddle(
+            player2_paddle,
+            keyboard,
+            SDL_SCANCODE_UP,
+            SDL_SCANCODE_DOWN,
+            paddle_speed,
+            window_height
+        );
 
         move_ball(ball);
-       
+        
+        // Check for paddle collisions
+        handle_paddle_collisions(ball, player1_paddle, PaddleSide::Left);
+        handle_paddle_collisions(ball, player2_paddle, PaddleSide::Right);
+
+        // Check for ceiling and floor collisions
         handle_wall_collisions(ball, window_height);
         
+        // Score if ball passes one of the boundaries
         handle_goals(
             ball,
             window_width,
@@ -148,6 +247,12 @@ int main(int, char*[])
         // Draw a white rectangle
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderFillRect(renderer, &ball.rect);
+
+        // Draw player 1 paddle
+        SDL_RenderFillRect(renderer, &player1_paddle.rect);
+
+        // Draw player 2 paddle
+        SDL_RenderFillRect(renderer, &player2_paddle.rect);
 
         // Present the completed frame
         SDL_RenderPresent(renderer);
