@@ -1,3 +1,0 @@
-/home/dante/CPP/Projects/Pong/build/CMakeFiles/pong.dir
-/home/dante/CPP/Projects/Pong/build/CMakeFiles/edit_cache.dir
-/home/dante/CPP/Projects/Pong/build/CMakeFiles/rebuild_cache.dir
