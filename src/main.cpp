@@ -1,9 +1,11 @@
 #include <iostream>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
+#include <SDL3_ttf/SDL_ttf.h>
 #include <algorithm> // std::clamp
 #include <cmath>     // std::hypot, std::sin, std::cos
 #include <numbers>   // std::numbers::pi_v
+#include <string>
 
 // Three different game states
 enum class GameState
@@ -40,14 +42,14 @@ void move_ball(Ball& ball, float delta_t)
 void handle_wall_collisions(Ball& ball, int window_height)
 {
     // Check ceiling
-    if (ball.rect.y <= 0.0f)
+    if (ball.rect.y <= 0.0f && ball.v_y < 0.0f)
     {
         ball.rect.y = 0.0f; // reset position to prevent boundary penetration
         ball.v_y = -ball.v_y; // reverse vertical velocity
     }
 
     // Check floor
-    if (ball.rect.y + ball.rect.h >= window_height)
+    if (ball.rect.y + ball.rect.h >= window_height && ball.v_y > 0.0f)
     {
         ball.rect.y = window_height - ball.rect.h;
         ball.v_y = -ball.v_y;
@@ -72,22 +74,12 @@ void handle_goals(
     if (ball.rect.x >= window_width) // right boundary
     {
         player1_score += 1;
-
-        std::cout << "Player 1 scores! "
-                  << player1_score << " - "
-                  << player2_score << "\n";
-
         reset_ball(ball, window_width, window_height);
         ball.v_x = -ball.v_x; // reverse velocity
     }
     if (ball.rect.x + ball.rect.w <= 0) // left boundary
     {
         player2_score += 1;
-
-        std::cout << "Player 2 scores! "
-            << player1_score << " - "
-            << player2_score << "\n";
-
         reset_ball(ball, window_width, window_height);
         ball.v_x = -ball.v_x;
     }
@@ -217,6 +209,36 @@ int main(int, char*[])
 
     std::cout << "Window and renderer created successfully!\n";
 
+    // Initialize SDL3_ttf
+    if (!TTF_Init())
+    {
+        std::cerr << "SDL_ttf initialization failed: "
+                  << SDL_GetError() << '\n';
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+
+    std::cout << "Font library initialized successfully!\n";
+
+    // Load font
+    TTF_Font* font = TTF_OpenFont("assets/score.ttf", 48.0f);
+
+    // Check if font loads correctly
+    if (font == nullptr)
+    {
+        std::cerr << "Failed to load font: "
+                  << SDL_GetError() << '\n';
+
+        TTF_Quit();
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+
+        return 1;
+    }
+
     // Paddle dimensions
     constexpr float paddle_width = 16.0f;
     constexpr float paddle_height = 100.0f;
@@ -250,6 +272,21 @@ int main(int, char*[])
     Paddle player1_paddle{{player1_paddle_x, player1_paddle_y, paddle_width, paddle_height}};
     Paddle player2_paddle{{player2_paddle_x, player2_paddle_y, paddle_width, paddle_height}};
     
+    // Define colour for rendered text
+    SDL_Color white{255, 255, 255, 255};
+
+    // Cached scores
+    int displayed_player1_score = -1; // start at -1 to check the first scoreboard update occurs
+    int displayed_player2_score = -1;
+
+    // Scoreboard textures
+    SDL_Texture* player1_score_texture = nullptr;
+    SDL_Texture* player2_score_texture = nullptr;
+
+    // Scoreboard destination rectangles
+    SDL_FRect player1_score_rect{};
+    SDL_FRect player2_score_rect{};
+
     // Timer
     const Uint64 frequency = SDL_GetPerformanceFrequency();
     Uint64 previous_counter = SDL_GetPerformanceCounter();
@@ -258,6 +295,9 @@ int main(int, char*[])
 
     while (running)
     {   
+        // Define maximum delta_t to prevent large time intervals from producing unwanted movement
+        constexpr float max_delta_t = 0.05f; // 50 ms
+
         // Obtain current counter
         const Uint64 current_counter = SDL_GetPerformanceCounter();
 
@@ -268,7 +308,8 @@ int main(int, char*[])
         // Save counter for the next frame
         previous_counter = current_counter;
 
-        const float delta_t = static_cast<float>(elapsed_seconds);
+        // Take the minimum of actual frame time and max allowed delta_t, so we never exceed max
+        const float delta_t = std::min(static_cast<float>(elapsed_seconds), max_delta_t);
 
         SDL_Event event;
 
@@ -322,6 +363,11 @@ int main(int, char*[])
                     std::cout << "\nNEW GAME\n";
                 }
             }
+        }
+
+        if (!running)
+        {
+            break;
         }
         
         if (game_state == GameState::Playing)
@@ -388,6 +434,102 @@ int main(int, char*[])
             }
         }
 
+    if (player1_score != displayed_player1_score)
+    {
+        // Convert the current score into text
+        std::string player1_score_text = std::to_string(player1_score);
+
+        // Create a new surface containing the updated score
+        SDL_Surface* surface1 = TTF_RenderText_Blended(
+            font,
+            player1_score_text.c_str(),
+            0,
+            white
+        );
+
+        if (surface1 != nullptr)
+        {
+            // Record dimensions before destroying the surface
+            float width = static_cast<float>(surface1->w);
+            float height = static_cast<float>(surface1->h);
+
+            // Create a NEW texture
+            SDL_Texture* new_texture =
+            SDL_CreateTextureFromSurface(renderer, surface1);
+
+            // We no longer need the temporary surface
+            SDL_DestroySurface(surface1);
+
+            if (new_texture != nullptr)
+            {
+                // Destroy the previous score texture
+                SDL_DestroyTexture(player1_score_texture);
+
+                // Store the new texture
+                player1_score_texture = new_texture;
+
+                // Update the rectangle for rendering
+                player1_score_rect = {
+                    window_width * 0.25f - width / 2.0f,
+                    40.0f,
+                    width,
+                    height
+                };
+
+                // Record which score the texture now represents
+                displayed_player1_score = player1_score;
+            }
+        }
+    }
+
+    if (player2_score != displayed_player2_score)
+    {
+        // Convert the current score into text
+        std::string player2_score_text = std::to_string(player2_score);
+
+        // Create a new surface containing the updated score
+        SDL_Surface* surface2 = TTF_RenderText_Blended(
+            font,
+            player2_score_text.c_str(),
+            0,
+            white
+        );
+
+        if (surface2 != nullptr)
+        {
+            // Record dimensions before destroying the surface
+            float width = static_cast<float>(surface2->w);
+            float height = static_cast<float>(surface2->h);
+
+            // Create a NEW texture
+            SDL_Texture* new_texture2 =
+            SDL_CreateTextureFromSurface(renderer, surface2);
+
+            // We no longer need the temporary surface
+            SDL_DestroySurface(surface2);
+
+            if (new_texture2 != nullptr)
+            {
+                // Destroy the previous score texture
+                SDL_DestroyTexture(player2_score_texture);
+
+                // Store the new texture
+                player2_score_texture = new_texture2;
+
+                // Update the rectangle for rendering
+                player2_score_rect = {
+                    window_width * 0.75f - width / 2.0f,
+                    40.0f,
+                    width,
+                    height
+                };
+
+                // Record which score the texture now represents
+                displayed_player2_score = player2_score;
+            }
+        }
+    }
+
         // Set the drawing colour
         SDL_SetRenderDrawColor(renderer, 20, 100, 90, 255);
 
@@ -404,6 +546,26 @@ int main(int, char*[])
         // Draw player 2 paddle
         SDL_RenderFillRect(renderer, &player2_paddle.rect);
 
+        // Render scoreboard textures
+        if (player1_score_texture != nullptr)
+        {
+            SDL_RenderTexture(
+                renderer,
+                player1_score_texture,
+                nullptr,
+                &player1_score_rect
+            );
+        }
+        if (player2_score_texture != nullptr)
+        {
+            SDL_RenderTexture(
+                renderer,
+                player2_score_texture,
+                nullptr,
+                &player2_score_rect
+            );
+        }
+
         // Present the completed frame
         SDL_RenderPresent(renderer);
 
@@ -411,6 +573,16 @@ int main(int, char*[])
     }
 
     // Release resources
+    if (player1_score_texture != nullptr)
+    {
+        SDL_DestroyTexture(player1_score_texture);
+    }
+    if (player2_score_texture != nullptr)
+    {
+        SDL_DestroyTexture(player2_score_texture);
+    }
+    TTF_CloseFont(font);
+    TTF_Quit();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

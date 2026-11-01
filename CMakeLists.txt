@@ -12,6 +12,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find the installed SDL3 library (required)
 find_package(SDL3 REQUIRED CONFIG)
+find_package(SDL3_ttf REQUIRED CONFIG)
 
 # Create an executable named pong from main.cpp
 add_executable(pong src/main.cpp)
@@ -20,4 +21,7 @@ add_executable(pong src/main.cpp)
 target_compile_options(pong PRIVATE -Wall -Wextra)
 
 # Link the pong executable against SDL3
-target_link_libraries(pong PRIVATE SDL3::SDL3)
+target_link_libraries(pong PRIVATE 
+    SDL3::SDL3
+    SDL3_ttf::SDL3_ttf
+)
