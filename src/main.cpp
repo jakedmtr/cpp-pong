@@ -165,6 +165,9 @@ int main(int, char*[])
     // Set current game state as playing
     GameState game_state = GameState::Playing;
 
+    // Menu selection: 0 = first option, 1 = Quit Game
+    int selected_menu_option = 0;
+
     // Set window dimenions
     const int window_width{1024};
     const int window_height{768};
@@ -224,13 +227,22 @@ int main(int, char*[])
 
     // Load font
     TTF_Font* font = TTF_OpenFont("assets/score.ttf", 48.0f);
+    TTF_Font* paused_font = TTF_OpenFont("assets/score.ttf", 68.0f);
 
     // Check if font loads correctly
-    if (font == nullptr)
+    if (font == nullptr || paused_font == nullptr)
     {
         std::cerr << "Failed to load font: "
                   << SDL_GetError() << '\n';
 
+        if (font != nullptr)
+        {
+            TTF_CloseFont(font);
+        }
+        if (paused_font != nullptr)
+        {
+            TTF_CloseFont(paused_font);
+        }
         TTF_Quit();
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
@@ -253,15 +265,15 @@ int main(int, char*[])
     constexpr float player2_paddle_y = (window_height - paddle_height) / 2.0f;
 
     // Speed of paddle in pixels per second
-    constexpr float paddle_speed = 360.0f;
+    constexpr float paddle_speed = 450.0f;
 
     // Ball dimenions
     constexpr float ball_h = 20.0f;
     constexpr float ball_w = 20.0f;
 
     // Initial ball velocities in pixels per second
-    constexpr float initial_ball_v_x = 360.0f;
-    constexpr float initial_ball_v_y = 180.0f;
+    constexpr float initial_ball_v_x = 550.0f;
+    constexpr float initial_ball_v_y = 250.0f;
 
     // Initial ball position
     constexpr float initial_ball_x = (window_width - ball_w) / 2;
@@ -287,11 +299,249 @@ int main(int, char*[])
     SDL_FRect player1_score_rect{};
     SDL_FRect player2_score_rect{};
 
+    // Shared menu textures and rectangles
+    SDL_Texture* paused_texture = nullptr;
+    SDL_Texture* resume_texture = nullptr;
+    SDL_Texture* play_again_texture = nullptr;
+    SDL_Texture* quit_texture = nullptr;
+    SDL_FRect paused_rect{};
+    SDL_FRect resume_rect{};
+    SDL_FRect play_again_rect{};
+    SDL_FRect quit_rect{};
+
+    // Winner title is created when a match ends
+    SDL_Texture* winner_texture = nullptr;
+    SDL_FRect winner_rect{};
+
+    // Pause surface
+    SDL_Surface* paused_surface = TTF_RenderText_Blended(
+        paused_font,
+        "PAUSED",
+        0,
+        white
+    );
+
+    // Resume surface
+    SDL_Surface* resume_surface = TTF_RenderText_Blended(
+        font,
+        "RESUME",
+        0,
+        white
+    );
+
+    // Play Again surface
+    SDL_Surface* play_again_surface = TTF_RenderText_Blended(
+        font,
+        "PLAY AGAIN",
+        0,
+        white
+    );
+
+    // Quit surface
+    SDL_Surface* quit_surface = TTF_RenderText_Blended(
+        font,
+        "QUIT GAME",
+        0,
+        white
+    );
+
+    if (paused_surface != nullptr)
+    {
+        // Record dimensions before destroying the surface
+        float paused_width = static_cast<float>(paused_surface->w);
+        float paused_height = static_cast<float>(paused_surface->h);  
+
+        // Create a NEW texture
+        SDL_Texture* paused_texture_new =
+        SDL_CreateTextureFromSurface(renderer, paused_surface);
+
+        // We no longer need the temporary surface
+        SDL_DestroySurface(paused_surface);
+
+        if (paused_texture_new != nullptr)
+        {
+            paused_texture = paused_texture_new;
+
+            paused_rect = {
+                (window_width - paused_width) / 2.0f,
+                window_height * 0.15f,
+                paused_width,
+                paused_height
+            };
+        }
+        else
+        {
+            std::cerr << "Failed to create pause texture: "
+                    << SDL_GetError() << '\n';
+        }
+    }
+
+    if (resume_surface != nullptr)
+    {
+        float width = static_cast<float>(resume_surface->w);
+        float height = static_cast<float>(resume_surface->h);
+
+        resume_texture = SDL_CreateTextureFromSurface(
+            renderer,
+            resume_surface
+        );
+
+        SDL_DestroySurface(resume_surface);
+
+        if (resume_texture != nullptr)
+        {
+            resume_rect = {
+                (window_width - width) / 2.0f,
+                window_height * 0.45f,
+                width,
+                height
+            };
+        }
+        else
+        {
+            std::cerr << "Failed to create resume texture: "
+                    << SDL_GetError() << '\n';
+        }
+    }
+    else
+    {
+        std::cerr << "Failed to render resume text: "
+                << SDL_GetError() << '\n';
+    }
+
+    if (play_again_surface != nullptr)
+    {
+        const float width = static_cast<float>(play_again_surface->w);
+        const float height = static_cast<float>(play_again_surface->h);
+
+        play_again_texture = SDL_CreateTextureFromSurface(
+            renderer,
+            play_again_surface
+        );
+        SDL_DestroySurface(play_again_surface);
+
+        if (play_again_texture != nullptr)
+        {
+            play_again_rect = {
+                (window_width - width) / 2.0f,
+                window_height * 0.45f,
+                width,
+                height
+            };
+        }
+        else
+        {
+            std::cerr << "Failed to create Play Again texture: "
+                      << SDL_GetError() << '\n';
+        }
+    }
+    else
+    {
+        std::cerr << "Failed to render Play Again text: "
+                  << SDL_GetError() << '\n';
+    }
+
+    if (quit_surface != nullptr)
+    {
+        float width = static_cast<float>(quit_surface->w);
+        float height = static_cast<float>(quit_surface->h);
+
+        quit_texture = SDL_CreateTextureFromSurface(
+            renderer,
+            quit_surface
+        );
+
+        SDL_DestroySurface(quit_surface);
+
+        if (quit_texture != nullptr)
+        {
+            quit_rect = {
+                (window_width - width) / 2.0f,
+                window_height * 0.55f,
+                width,
+                height
+            };
+        }
+        else
+        {
+            std::cerr << "Failed to create quit texture: "
+                    << SDL_GetError() << '\n';
+        }
+    }
+    else
+    {
+        std::cerr << "Failed to render quit text: "
+                << SDL_GetError() << '\n';
+    }
+
+    // Small pause instruction text
+    SDL_Texture* pause_hint_texture = nullptr;
+    SDL_FRect pause_hint_rect{};
+
+    SDL_Surface* pause_hint_surface = TTF_RenderText_Blended(
+        font,
+        "PRESS P TO PAUSE",
+        0,
+        white
+    );
+
+    if (pause_hint_surface != nullptr)
+    {
+        constexpr float scale = 0.4f;
+
+        float width = pause_hint_surface->w * scale;
+        float height = pause_hint_surface->h * scale;
+
+        pause_hint_texture = SDL_CreateTextureFromSurface(
+            renderer,
+            pause_hint_surface
+        );
+
+        SDL_DestroySurface(pause_hint_surface);
+
+        pause_hint_rect = {
+            (window_width - width) / 2.0f,
+            8.0f,
+            width,
+            height
+        };
+    }
+    else
+    {
+        std::cerr << "Failed to create pause hint: "
+                << SDL_GetError() << '\n';
+    }
+
     // Timer
     const Uint64 frequency = SDL_GetPerformanceFrequency();
     Uint64 previous_counter = SDL_GetPerformanceCounter();
 
     bool running{true};
+
+    // Shared reset for Play Again (and the existing R shortcut)
+    auto start_new_match = [&]()
+    {
+        player1_score = 0;
+        player2_score = 0;
+
+        ball.rect.x = initial_ball_x;
+        ball.rect.y = initial_ball_y;
+        ball.v_x = initial_ball_v_x;
+        ball.v_y = initial_ball_v_y;
+
+        player1_paddle.rect.x = player1_paddle_x;
+        player1_paddle.rect.y = player1_paddle_y;
+        player2_paddle.rect.x = player2_paddle_x;
+        player2_paddle.rect.y = player2_paddle_y;
+
+        SDL_DestroyTexture(winner_texture);
+        winner_texture = nullptr;
+        winner_rect = {};
+        selected_menu_option = 0;
+        game_state = GameState::Playing;
+
+        std::cout << "\nNEW GAME\n";
+    };
 
     while (running)
     {   
@@ -328,6 +578,7 @@ int main(int, char*[])
                     if (game_state == GameState::Playing)
                     {
                         game_state = GameState::Paused;
+                        selected_menu_option = 0;
                     }
                     // Unpause the game if P is pressed again while paused
                     else if (game_state == GameState::Paused)
@@ -336,31 +587,46 @@ int main(int, char*[])
                     }
                 }
 
-                // R: Restart match after game over
-                else if (event.key.scancode == SDL_SCANCODE_R && game_state == GameState::GameOver)
+                // Change selection down in either menu
+                else if (event.key.scancode == SDL_SCANCODE_DOWN &&
+                        (game_state == GameState::Paused || game_state == GameState::GameOver))
                 {
-                    // Reset scores
-                    player1_score = 0;
-                    player2_score = 0;
+                    selected_menu_option = std::clamp(selected_menu_option + 1, 0, 1);
+                }
 
-                    // Centre ball
-                    ball.rect.x = initial_ball_x;
-                    ball.rect.y = initial_ball_y;
+                // Change selection up in either menu
+                else if (event.key.scancode == SDL_SCANCODE_UP &&
+                        (game_state == GameState::Paused || game_state == GameState::GameOver))
+                {
+                    selected_menu_option = std::clamp(selected_menu_option - 1, 0, 1);
+                }
 
-                    // Restore ball velocities
-                    ball.v_x = initial_ball_v_x;
-                    ball.v_y = initial_ball_v_y;
+                // Enter: activate the current menu's selected option
+                else if (event.key.scancode == SDL_SCANCODE_RETURN &&
+                        (game_state == GameState::Paused || game_state == GameState::GameOver))
+                {
+                    if (selected_menu_option == 1)
+                    {
+                        // Both menus share Quit Game
+                        running = false;
+                    }
+                    else if (game_state == GameState::Paused)
+                    {
+                        // Resume the paused match
+                        game_state = GameState::Playing;
+                    }
+                    else
+                    {
+                        // Play Again from the Game Over menu
+                        start_new_match();
+                    }
+                }
 
-                    // Centre both paddles
-                    player1_paddle.rect.x = player1_paddle_x; 
-                    player1_paddle.rect.y = player1_paddle_y; 
-                    player2_paddle.rect.x = player2_paddle_x; 
-                    player2_paddle.rect.y = player2_paddle_y; 
-
-                    // Return to Playing
-                    game_state = GameState::Playing;
-
-                    std::cout << "\nNEW GAME\n";
+                // Keep R as a shortcut for starting a new match after game over
+                else if (event.key.scancode == SDL_SCANCODE_R &&
+                         game_state == GameState::GameOver)
+                {
+                    start_new_match();
                 }
             }
         }
@@ -374,7 +640,7 @@ int main(int, char*[])
         {
             // Read the keyboard
             const bool* keyboard = SDL_GetKeyboardState(nullptr);
-            
+
             // Left paddle control
             move_paddle(
                 player1_paddle,
@@ -415,22 +681,50 @@ int main(int, char*[])
                 player2_score
             );
 
-            // End game upon a player reaching the maximum score
+            // End the match and create the winner title only once
             if (player1_score >= winning_score || player2_score >= winning_score)
-            {   
-                char winning_player;
-                if (player1_score >= winning_score)
+            {
+                const bool player1_won = (player1_score >= winning_score);
+                const char* winner_text = player1_won ? "PLAYER 1 WINS" : "PLAYER 2 WINS";
+
+                SDL_Surface* winner_surface = TTF_RenderText_Blended(
+                    paused_font,
+                    winner_text,
+                    0,
+                    white
+                );
+                if (winner_surface != nullptr)
                 {
-                    winning_player = '1';
+                    const float width = static_cast<float>(winner_surface->w);
+                    const float height = static_cast<float>(winner_surface->h);
+
+                    winner_texture = SDL_CreateTextureFromSurface(renderer, winner_surface);
+                    SDL_DestroySurface(winner_surface);
+
+                    if (winner_texture != nullptr)
+                    {
+                        winner_rect = {
+                            (window_width - width) / 2.0f,
+                            window_height * 0.15f,
+                            width,
+                            height
+                        };
+                    }
+                    else
+                    {
+                        std::cerr << "Failed to create winner texture: "
+                                  << SDL_GetError() << '\n';
+                    }
                 }
                 else
                 {
-                    winning_player = '2';
+                    std::cerr << "Failed to render winner text: "
+                              << SDL_GetError() << '\n';
                 }
 
+                selected_menu_option = 0; // Play Again is the default selection
                 game_state = GameState::GameOver;
-
-                std::cout << "\nGAME OVER\nPlayer " << winning_player << " wins!" << std::endl;
+                std::cout << "\nGAME OVER\n" << winner_text << '\n';
             }
         }
 
@@ -566,6 +860,95 @@ int main(int, char*[])
             );
         }
 
+        // Render pause menu
+        if (game_state == GameState::Paused && paused_texture != nullptr)
+        {
+            SDL_RenderTexture(
+                renderer,
+                paused_texture,
+                nullptr,
+                &paused_rect
+            );
+        }
+
+        // Render 'resume' menu option
+        if (game_state == GameState::Paused && resume_texture != nullptr)
+        {
+            // Highlight menu selection
+            if (selected_menu_option == 0)
+            {
+                SDL_SetTextureColorMod(resume_texture, 255, 220, 100);
+            }
+            else
+            {
+                SDL_SetTextureColorMod(resume_texture, 255, 255, 255);
+            }
+            
+            SDL_RenderTexture(
+                renderer,
+                resume_texture,
+                nullptr,
+                &resume_rect
+            );
+        }
+        
+        // Render the Game Over title and Play Again option
+        if (game_state == GameState::GameOver)
+        {
+            if (winner_texture != nullptr)
+            {
+                SDL_RenderTexture(renderer, winner_texture, nullptr, &winner_rect);
+            }
+
+            if (play_again_texture != nullptr)
+            {
+                if (selected_menu_option == 0)
+                {
+                    SDL_SetTextureColorMod(play_again_texture, 255, 220, 100);
+                }
+                else
+                {
+                    SDL_SetTextureColorMod(play_again_texture, 255, 255, 255);
+                }
+
+                SDL_RenderTexture(renderer, play_again_texture, nullptr, &play_again_rect);
+            }
+        }
+
+        // Quit Game appears in both the Pause and Game Over menus
+        if ((game_state == GameState::Paused || game_state == GameState::GameOver) &&
+            quit_texture != nullptr)
+        {
+            // Highlight menu selection
+            if (selected_menu_option == 1)
+            {
+                SDL_SetTextureColorMod(quit_texture, 255, 220, 100);
+            }
+            else
+            {
+                SDL_SetTextureColorMod(quit_texture, 255, 255, 255);
+            }
+
+            SDL_RenderTexture(
+                renderer,
+                quit_texture,
+                nullptr,
+                &quit_rect
+            );
+        }
+
+        // Display pause instructions during gameplay
+        if (game_state == GameState::Playing &&
+            pause_hint_texture != nullptr)
+        {
+            SDL_RenderTexture(
+                renderer,
+                pause_hint_texture,
+                nullptr,
+                &pause_hint_rect
+            );
+        }
+
         // Present the completed frame
         SDL_RenderPresent(renderer);
 
@@ -581,7 +964,32 @@ int main(int, char*[])
     {
         SDL_DestroyTexture(player2_score_texture);
     }
+    if (paused_texture != nullptr)
+    {
+        SDL_DestroyTexture(paused_texture);
+    }
+    if (resume_texture != nullptr)
+    {
+        SDL_DestroyTexture(resume_texture);
+    }
+    if (play_again_texture != nullptr)
+    {
+        SDL_DestroyTexture(play_again_texture);
+    }
+    if (quit_texture != nullptr)
+    {
+        SDL_DestroyTexture(quit_texture);
+    }
+    if (winner_texture != nullptr)
+    {
+        SDL_DestroyTexture(winner_texture);
+    }
+    if (pause_hint_texture != nullptr)
+    {
+        SDL_DestroyTexture(pause_hint_texture);
+    }
     TTF_CloseFont(font);
+    TTF_CloseFont(paused_font);
     TTF_Quit();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
